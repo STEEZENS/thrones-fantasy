@@ -22,6 +22,8 @@ const players = [
 ]
 
 // DATA SET ON AJAX
+let episodeDates = ['Jul 16, 2017 19:00:00', 'Jul 23, 2017 19:00:00', 'Jul 30, 2017 19:00:00', 'Aug 6, 2017 19:00:00', 'Aug 13, 2017 19:00:00', 'Aug 20, 2017 19:00:00', 'Aug 27, 2017 19:00:00'];
+let epochHour = 3600000;
 let scoring = null;
 let characterTallies = null;
 let characterScorecards = null;
@@ -29,10 +31,39 @@ let playerScorecards = null;
 
 // DOM REFS
 const DOM = {
+    episodeCountdown: document.getElementById('episode-countdown'),
     scorecards: document.getElementById('scorecards')
 }
 
 // METHODS
+function getTimer () {
+    if (!episodeDates.length) {return}
+    setInterval(() => {
+        let now = new Date().getTime();
+        let futureEpisodes = [];
+        episodeDates.forEach((date, index) => {
+            if ((new Date(date).getTime() + epochHour) > now) {
+                futureEpisodes.push({date: new Date(date).getTime(), episode: (index + 1)});
+            }
+        });
+        if (futureEpisodes.length) {
+            let nearestEpisode = futureEpisodes[0];
+            let distance = nearestEpisode.date - now;
+            let liveEpisode = (distance <= 0 && distance >= -epochHour) ? true : false;
+            if (liveEpisode) {
+                DOM.episodeCountdown.innerHTML = `<p class="live-episode">Episode ${ nearestEpisode.episode } is live<span></span></p>`;
+            } else {
+                let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                DOM.episodeCountdown.innerHTML = `<p class="episode-begins">Episode ${ nearestEpisode.episode } begins in:</p><p class="episode-counter">${days}d ${hours}h ${minutes}m ${seconds}s</p>`;
+            }
+        } else {
+            DOM.episodeCountdown.innerHTML = '<p class="season-ended">Season has Ended</p>';
+        }
+    }, 1000);
+}
 function getCharacterScorecards () {
     let characterScorecards = characterTallies;
     characterScorecards.forEach(character => {
@@ -243,6 +274,7 @@ function handleScroll () {
     }
 }
 function init () {
+    getTimer();
     let getFantasyData = new XMLHttpRequest();
     getFantasyData.open('GET', `https://codepen.io/camstephensdomo/pen/rwbwde.js`);
     getFantasyData.onload = () => {
