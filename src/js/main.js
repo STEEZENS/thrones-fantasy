@@ -1,4 +1,5 @@
 'use strict';
+const throttle = require('lodash/throttle');
 const css = require('../sass/main.scss');
 
 // PLAYERS AND THEIR DRAFT PICKS
@@ -28,6 +29,7 @@ let scoring = null;
 let characterTallies = null;
 let characterScorecards = null;
 let playerScorecards = null;
+let pinnedEl = null;
 
 // DOM REFS
 const DOM = {
@@ -226,20 +228,20 @@ function loadPlayerScorecards () {
         }
 
         let template = `<div class="overview">
-        <div class="scorecard-name">${ scorecard.name }</div>
-        <div>${ commalizeNumber(scorecard.totalPoints) }</div>
-        </div>
-        ${ getAwards() }
-        <div class="team">
-        <table>
-        <tr class="team-members">
-        <th style="opacity: 0;">Character:</th>
-        ${ getTeamMembers() }
-        <th style="opacity: 0; display: none;">Total:</th>
-        </tr>
-        ${ getCriteriaAndScoreItems() }
-        </table>
-        </div>`
+                            <div class="scorecard-name">${ scorecard.name }</div>
+                            <div>${ commalizeNumber(scorecard.totalPoints) }</div>
+                        </div>
+                        ${ getAwards() }
+                        <div class="team">
+                            <table>
+                            <tr class="team-members">
+                                <th style="opacity: 1;">${ scorecard.name } | ${ scorecard.totalPoints }</th>
+                                ${ getTeamMembers() }
+                                <th style="opacity: 0; display: none;">Total:</th>
+                            </tr>
+                            ${ getCriteriaAndScoreItems() }
+                            </table>
+                        </div>`
 
         let toggleTeamEl = document.createElement('BUTTON');
         toggleTeamEl.setAttribute('class', 'team-toggle');
@@ -270,7 +272,9 @@ function toggleTeam(index) {
 }
 function handleScroll () {
     for (let i = 0; i < DOM.scorecards.children.length; i++) {
-        console.log('card ' + i + ' is : ' + DOM.scorecards.children[i].getBoundingClientRect().top)
+        if (playerScorecards[i].open) {
+            console.log('card ' + i + ' is : ' + DOM.scorecards.children[i].getBoundingClientRect().top);   
+        }
     }
 }
 function init () {
@@ -290,7 +294,7 @@ function init () {
         }
     }
     getFantasyData.send();
-    // window.addEventListener('scroll', _.throttle(handleScroll, 100)); *load in lodash for this if used
+    window.addEventListener('scroll', throttle(handleScroll, 100));
 }
 
 // UTILITY METHODS
